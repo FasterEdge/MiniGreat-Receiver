@@ -144,4 +144,4 @@ MiniGreat-Receiver/
 
 ### 八、License
 
-MIT
+Apache License 2.0
