@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiniGreat-Receiver · 多协议调试接收面板</title>
+<style>
+:root { --bg:#0f172a; --panel:#1e293b; --border:#334155; --fg:#e2e8f0; --muted:#94a3b8; --accent:#38bdf8; --ok:#4ade80; --err:#f87171; --warn:#fbbf24; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif; font-size:14px; }
+header { display:flex; align-items:center; gap:12px; padding:12px 20px; background:var(--panel); border-bottom:1px solid var(--border); }
+header h1 { font-size:16px; margin:0; }
+header .badge { color:var(--muted); font-size:12px; }
+#status { margin-left:auto; font-size:12px; padding:4px 10px; border-radius:12px; background:var(--border); }
+#status.running { background:#14532d; color:var(--ok); }
+.layout { display:grid; grid-template-columns:380px 1fr; gap:16px; padding:16px 20px; }
+@media(max-width:900px){ .layout { grid-template-columns:1fr; } }
+.panel { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px; }
+.panel h2 { margin:0 0 12px; font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+label { display:block; margin:8px 0 3px; color:var(--muted); font-size:12px; }
+input, select, textarea { width:100%; background:#0b1220; border:1px solid var(--border); color:var(--fg); border-radius:6px; padding:7px 9px; font-size:13px; }
+input:focus, select:focus, textarea:focus { outline:none; border-color:var(--accent); }
+.row { display:flex; gap:8px; }
+.row > div { flex:1; }
+button { background:var(--accent); color:#06283a; border:none; border-radius:6px; padding:9px 14px; font-weight:600; cursor:pointer; font-size:13px; }
+button.secondary { background:var(--border); color:var(--fg); }
+button:hover { filter:brightness(1.1); }
+button:disabled { opacity:.5; cursor:not-allowed; }
+.btnbar { display:flex; gap:8px; margin-top:14px; }
+.group { border:1px dashed var(--border); border-radius:6px; padding:8px 10px; margin-top:8px; }
+.group[hidden] { display:none; }
+#log { font-family:ui-monospace,monospace; font-size:12px; line-height:1.6; height:560px; overflow-y:auto; white-space:pre-wrap; word-break:break-all; }
+.entry { border-bottom:1px solid var(--border); padding:8px 4px; }
+.entry .head { color:var(--muted); font-size:11px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📡 MiniGreat-Receiver</h1>
+  <span class="badge">全方面多协议调试接收工具</span>
+  <span id="status">未监听</span>
+</header>
+
+<div class="layout">
+  <div class="panel">
+    <h2>监听配置</h2>
+    <label>协议</label>
+    <select id="protocol"></select>
+
+    <div id="groups">
+      <div class="group" data-p="tcp udp http ws" hidden>
+        <label>监听地址</label>
+        <input id="listen" placeholder=":9000">
+        <div class="row" style="margin-top:8px">
+          <label style="display:flex;align-items:center;gap:6px;margin:0">
+            <input type="checkbox" id="echo" style="width:auto"> 回显收到的数据
+          </label>
+        </div>
+      </div>
+
+      <div class="group" data-p="http" hidden>
+        <label>HTTP 响应码</label>
+        <input id="status" value="200">
+        <label>HTTP 响应体</label>
+        <textarea id="body" rows="3" placeholder='{"status":"ok"}'></textarea>
+      </div>
+
+      <div class="group" data-p="mqtt" hidden>
+        <label>Broker</label>
+        <input id="broker" placeholder="tcp://192.168.1.100:1883">
+        <label>主题 (每行一个, 支持通配符)</label>
+        <textarea id="topics" rows="3" placeholder="test/#&#10;data/+"></textarea>
+        <div class="row">
+          <div><label>用户名</label><input id="user"></div>
+          <div><label>密码</label><input id="pass" type="password"></div>
+        </div>
+      </div>
+
+      <div class="group" data-p="modbus" hidden>
+        <label>模式: 填 TCP 地址 或 RTU 设备</label>
+        <div class="row">
+          <div><label>TCP 监听</label><input id="listen2" placeholder=":502"></div>
+          <div><label>RTU 设备</label><input id="device2" placeholder="/dev/ttyUSB0"></div>
+        </div>
+        <div class="row">
+          <div><label>从机ID</label><input id="unit" value="1"></div>
+          <div><label>波特率(RTU)</label><input id="baud2" value="9600"></div>
+        </div>
+      </div>
+
+      <div class="group" data-p="serial rf" hidden>
+        <label>串口设备</label>
+        <input id="device" placeholder="/dev/ttyUSB0">
+        <div class="row">
+          <div><label>波特率</label><input id="baud" value="115200"></div>
+          <div><label>数据位</label><select id="databits"><option>8</option><option>7</option></select></div>
+          <div><label>校验</label><select id="parity"><option>N</option><option>E</option><option>O</option></select></div>
+          <div><label>停止位</label><select id="stopbits"><option>1</option><option>2</option></select></div>
+        </div>
+      </div>
+
+      <div class="group" data-p="can" hidden>
+        <label>接口</label>
+        <input id="iface" placeholder="can0 或 vcan0">
+        <label>过滤 ID (0 = 全部)</label>
+        <input id="filter" placeholder="0x123">
+      </div>
+
+      <div class="group" data-p="spi" hidden>
+        <label>设备</label>
+        <input id="spidev" placeholder="/dev/spidev0.0">
+        <div class="row">
+          <div><label>模式</label><input id="spimode" value="0"></div>
+          <div><label>位宽</label><input id="spibits" value="8"></div>
+          <div><label>频率Hz</label><input id="spispeed" value="1000000"></div>
+          <div><label>轮询ms</label><input id="poll" value="500"></div>
+        </div>
+      </div>
+
+      <div class="group" data-p="i2c" hidden>
+        <div class="row">
+          <div><label>总线 /dev/i2c-N</label><input id="i2cbus" value="1"></div>
+          <div><label>从机地址</label><input id="i2caddr" placeholder="0x48"></div>
+        </div>
+        <div class="row">
+          <div><label>寄存器 (-1 不带)</label><input id="i2creg" value="-1"></div>
+          <div><label>读取长度</label><input id="i2clen" value="16"></div>
+          <div><label>轮询ms</label><input id="poll2" value="500"></div>
+        </div>
+      </div>
+
+      <div class="group" data-p="ble" hidden>
+        <label>扫描秒数</label>
+        <input id="scan" value="10">
+      </div>
+    </div>
+
+    <div class="btnbar">
+      <button id="start" style="flex:1">▶ 开始监听</button>
+      <button id="stop" class="secondary">⏹ 停止</button>
+      <button id="clear" class="secondary">清空</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>实时事件流</h2>
+    <div id="log"></div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let ws = null;
+
+function groupFor(p){ for(const g of document.querySelectorAll('.group')){ g.hidden = !g.dataset.p.split(' ').includes(p); } }
+
+async function loadProtocols(){
+  const r = await fetch('/api/protocols'); const list = await r.json();
+  const sel = $('protocol');
+  sel.innerHTML = list.map(p=>`<option value="${p.name}">${p.name} — ${p.description}</option>`).join('');
+  sel.onchange = () => groupFor(sel.value);
+  groupFor(sel.value);
+}
+
+function buildCfg(){
+  const p = $('protocol').value;
+  const cfg = { protocol:p };
+  if(['tcp','udp','http','ws'].includes(p)){ cfg.listenAddr=$('listen').value; cfg.echo=$('echo').checked; }
+  if(p==='http'){ cfg.httpStatusCode=+$('status').value||200; cfg.httpBody=$('body').value; }
+  if(p==='mqtt'){ cfg.broker=$('broker').value; cfg.topics=$('topics').value.split('\n').map(s=>s.trim()).filter(Boolean); cfg.username=$('user').value; cfg.password=$('pass').value; }
+  if(p==='modbus'){ cfg.listenAddr=$('listen2').value; cfg.serialDevice=$('device2').value; cfg.modbusUnitId=+$('unit').value; cfg.modbusBaud=+$('baud2').value; }
+  if(['serial','rf'].includes(p)){ cfg.serialDevice=$('device').value; cfg.serialBaud=+$('baud').value; cfg.serialDataBits=+$('databits').value; cfg.serialParity=$('parity').value; cfg.serialStopBits=+$('stopbits').value; }
+  if(p==='can'){ cfg.canInterface=$('iface').value; cfg.canFilterId=parseInt($('filter').value||'0',16); }
+  if(p==='spi'){ cfg.spiDevice=$('spidev').value; cfg.spiMode=+$('spimode').value; cfg.spiBits=+$('spibits').value; cfg.spiSpeed=+$('spispeed').value; cfg.spiPollMs=+$('poll').value; }
+  if(p==='i2c'){ cfg.i2cBus=+$('i2cbus').value; cfg.i2cAddr=parseInt($('i2caddr').value||'0',16); cfg.i2cRegister=+$('i2creg').value; cfg.i2cLen=+$('i2clen').value; cfg.i2cPollMs=+$('poll2').value; }
+  if(p==='ble'){ cfg.bleScanSeconds=+$('scan').value; }
+  return cfg;
+}
+
+function esc(s){ const d=document.createElement('div'); d.textContent=s==null?'':String(s); return d.innerHTML; }
+
+function appendEntry(ev){
+  const div = document.createElement('div'); div.className='entry';
+  let txt = `<div class="head">${esc(ev.time)} · ${esc(ev.protocol)}${ev.source?' · '+esc(ev.source):''}</div>`;
+  if(ev.dataTxt) txt += `<div>${esc(ev.dataTxt)}</div>`;
+  if(ev.dataHex) txt += `<div style="color:var(--muted)">HEX: ${esc(ev.dataHex)}</div>`;
+  if(ev.meta && Object.keys(ev.meta).length){
+    txt += `<div style="color:var(--muted)">${esc(JSON.stringify(ev.meta))}</div>`;
+  }
+  div.innerHTML = txt;
+  $('log').prepend(div);
+}
+
+$('start').onclick = async ()=>{
+  $('start').disabled = true;
+  try{
+    const r = await fetch('/api/start', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(buildCfg())});
+    const res = await r.json();
+    if(res.ok){ setStatus(true); } else { alert(res.error||'启动失败'); }
+  }catch(e){ alert('启动失败: '+e.message); }
+  finally{ $('start').disabled=false; }
+};
+$('stop').onclick = async ()=>{
+  await fetch('/api/stop', {method:'POST'});
+  setStatus(false);
+};
+$('clear').onclick = ()=> $('log').innerHTML='';
+
+function setStatus(running){
+  const s = $('status');
+  s.className = running ? 'running' : '';
+  s.textContent = running ? '● 监听中' : '未监听';
+}
+
+function connectWS(){
+  const proto = location.protocol==='https:'?'wss':'ws';
+  ws = new WebSocket(proto+'://'+location.host+'/api/ws');
+  ws.onclose = ()=> setTimeout(connectWS, 2000);
+  ws.onmessage = ev => { try{ appendEntry(JSON.parse(ev.data)); }catch(e){} };
+}
+
+(async function init(){ await loadProtocols(); connectWS();
+  const st = await (await fetch('/api/status')).json(); setStatus(st.running);
+})();
+</script>
+</body>
+</html>

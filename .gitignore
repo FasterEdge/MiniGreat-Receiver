@@ -1,0 +1,15 @@
+# 二进制
+/minigreat-receiver
+/minigreat-receiver-*
+/minigreat-sender
+/minigreat-sender-*
+
+# Go
+*.test
+*.prof
+/dist/
+
+# 日志与临时
+*.log
+/tmp/
+.DS_Store

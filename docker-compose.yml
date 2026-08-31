@@ -1,0 +1,29 @@
+# MiniGreat-Receiver Docker Compose 示例
+# 硬件协议(串口/SPI/I2C/CAN/BLE)需要宿主设备透传:
+#   - 串口/SPI/I2C: 挂载 /dev 设备节点
+#   - CAN: network_mode: host 访问 can0/vcan0
+#   - BLE: 挂载宿主 D-Bus
+#
+# 启动 Web 面板:  docker compose up -d receiver-web
+# 以 TCP 监听示例: docker compose run --rm receiver /bin/sh
+services:
+  receiver-web:
+    image: minigreat-receiver:latest
+    build:
+      context: .
+      args:
+        TARGETARCH: ${TARGETARCH:-amd64}
+    container_name: minigreat-receiver
+    network_mode: host
+    privileged: true
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+      - /dev/spidev0.0:/dev/spidev0.0
+      - /dev/spidev0.1:/dev/spidev0.1
+      - /dev/i2c-1:/dev/i2c-1
+    volumes:
+      - /run/dbus:/run/dbus:ro   # BLE BlueZ D-Bus
+      - /var/run/bluetooth:/var/run/bluetooth:ro
+      - ./config:/app/config:ro
+    command: ["web", "--addr", "0.0.0.0:8080"]
+    restart: unless-stopped
