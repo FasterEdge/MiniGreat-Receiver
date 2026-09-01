@@ -1,3 +1,8 @@
+// ─────────────────────────────────────────────────────────────
+// FasterEdge 开源项目
+// Github: https://github.com/FasterEdge
+// Gitee:  https://gitee.com/FasterEdge
+// ─────────────────────────────────────────────────────────────
 // Package web 提供 MiniGreat-Receiver 本地 Web 调试面板:
 //  - 静态页面 (内嵌)
 //  - POST /api/start   启动监听 (JSON body = core.Config)

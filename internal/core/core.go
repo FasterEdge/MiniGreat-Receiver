@@ -1,3 +1,8 @@
+// ─────────────────────────────────────────────────────────────
+// FasterEdge 开源项目
+// Github: https://github.com/FasterEdge
+// Gitee:  https://gitee.com/FasterEdge
+// ─────────────────────────────────────────────────────────────
 // Package core 定义 MiniGreat-Receiver 的核心抽象:
 // 监听器接口(Listener)、配置(Config)与事件(Event)。
 package core
