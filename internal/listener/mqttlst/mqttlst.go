@@ -33,6 +33,9 @@ func (MQTTListener) Validate(cfg *core.Config) error {
 	if len(cfg.Topics) == 0 {
 		return fmt.Errorf("mqtt: topics 不能为空")
 	}
+	if cfg.QoS > 2 {
+		return fmt.Errorf("mqtt: qos 必须在 0~2 之间")
+	}
 	return nil
 }
 
@@ -72,7 +75,7 @@ func (MQTTListener) Run(ctx context.Context, cfg *core.Config, sink core.Sink) e
 		})
 	})
 	for _, t := range cfg.Topics {
-		ptok := client.Subscribe(t, 0, handler)
+		ptok := client.Subscribe(t, cfg.QoS, handler)
 		if !ptok.WaitTimeout(5*time.Second) || ptok.Error() != nil {
 			return fmt.Errorf("mqtt: 订阅 %s 失败: %v", t, ptok.Error())
 		}

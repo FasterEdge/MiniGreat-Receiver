@@ -34,6 +34,9 @@ type Config struct {
 	Username string   `json:"username,omitempty" yaml:"username"`
 	Password string   `json:"password,omitempty" yaml:"password"`
 	Topics   []string `json:"topics,omitempty" yaml:"topics"`
+	// QoS 订阅级别 0~2。MQTT 协议规定 broker 下发 QoS = min(发布QoS, 订阅QoS),
+	// 订阅 0 会把 QoS 1/2 消息降级, 调试工具将永远看不到真实 QoS, 默认 2。
+	QoS byte `json:"qos,omitempty" yaml:"qos"`
 
 	// ---- modbus ----
 	ModbusUnitID   byte   `json:"modbusUnitId,omitempty" yaml:"modbusUnitId"`

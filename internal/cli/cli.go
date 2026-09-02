@@ -68,7 +68,7 @@ listen 子命令选项:
   --body <str>      HTTP 响应体
   --status <code>   HTTP 响应码 (默认 200)
 
-MQTT: --broker tcp://host:1883 --topic t(可多次) --user --pass --client
+MQTT: --broker tcp://host:1883 --topic t(可多次) --qos 0-2 --user --pass --client
 Modbus: --listen host:502 或 --device /dev/ttyUSB0 --unit 1 --baud 9600
 串口 (serial/rf): --device /dev/ttyUSB0 --baud 115200 --databits 8 --parity N --stopbits 1
 CAN (can): --iface can0 --filter 0x123
@@ -103,6 +103,7 @@ type listenFlags struct {
 	user   string
 	pass   string
 	client string
+	qos    int
 
 	device   string
 	baud     int
@@ -151,6 +152,7 @@ func cmdListen(args []string, stdout, stderr *os.File) int {
 	fs.StringVar(&f.user, "user", "", "用户名")
 	fs.StringVar(&f.pass, "pass", "", "密码")
 	fs.StringVar(&f.client, "client", "", "client id")
+	fs.IntVar(&f.qos, "qos", 2, "MQTT 订阅 QoS (0~2, 默认 2 以保留发布端真实 QoS)")
 
 	fs.StringVar(&f.device, "device", "", "串口设备")
 	fs.IntVar(&f.baud, "baud", 115200, "波特率")
@@ -219,6 +221,7 @@ func buildConfig(f *listenFlags) (*core.Config, error) {
 		Username:       f.user,
 		Password:       f.pass,
 		ClientID:       f.client,
+		QoS:            byte(f.qos),
 		SerialDevice:   f.device,
 		SerialBaud:     f.baud,
 		SerialDataBits: f.databits,
