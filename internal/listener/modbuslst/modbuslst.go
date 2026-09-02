@@ -1,3 +1,4 @@
+// FasterEdge 开源项目 - Github: https://github.com/FasterEdge - Gitee: https://gitee.com/FasterEdge
 // Package modbuslst 提供自实现的 Modbus 从站(Server), 支持 TCP 与 RTU。
 // 内存中维护线圈区与寄存器区, 响应常见功能码:
 //

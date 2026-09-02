@@ -1,3 +1,4 @@
+// FasterEdge 开源项目 - Github: https://github.com/FasterEdge - Gitee: https://gitee.com/FasterEdge
 //go:build linux
 
 // Package spilst 实现 SPI 监听器: 作为主设备周期性读取从设备 MISO 数据。
