@@ -1,7 +1,8 @@
 // Package modbuslst 提供自实现的 Modbus 从站(Server), 支持 TCP 与 RTU。
 // 内存中维护线圈区与寄存器区, 响应常见功能码:
-//   01 读线圈 / 02 读离散输入 / 03 读保持寄存器 / 04 读输入寄存器
-//   05 写单线圈 / 06 写单寄存器 / 0F 写多线圈 / 10 写多寄存器
+//
+//	01 读线圈 / 02 读离散输入 / 03 读保持寄存器 / 04 读输入寄存器
+//	05 写单线圈 / 06 写单寄存器 / 0F 写多线圈 / 10 写多寄存器
 package modbuslst
 
 import (
@@ -16,7 +17,7 @@ import (
 
 	"go.bug.st/serial"
 
-	"minigreat-receiver/internal/core"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/core"
 )
 
 // ModbusListener Modbus 从站监听器。
@@ -258,11 +259,11 @@ func (d *modbusDevice) processRTU(unitID byte, frame []byte) ([]byte, *core.Even
 
 // modbusDevice 内存数据模型与协议处理。
 type modbusDevice struct {
-	mu   sync.Mutex
-	coils []byte // 线圈
-	dis  []byte  // 离散输入(只读)
-	hr   []uint16 // 保持寄存器
-	ir   []uint16 // 输入寄存器(只读)
+	mu    sync.Mutex
+	coils []byte   // 线圈
+	dis   []byte   // 离散输入(只读)
+	hr    []uint16 // 保持寄存器
+	ir    []uint16 // 输入寄存器(只读)
 }
 
 // process 处理 PDU, 返回响应 PDU 与可选事件。

@@ -4,13 +4,13 @@
 // Gitee:  https://gitee.com/FasterEdge
 // ─────────────────────────────────────────────────────────────
 // Package web 提供 MiniGreat-Receiver 本地 Web 调试面板:
-//  - 静态页面 (内嵌)
-//  - POST /api/start   启动监听 (JSON body = core.Config)
-//  - POST /api/stop    停止当前监听
-//  - GET  /api/status  当前状态
-//  - GET  /api/protocols 列出监听器
-//  - GET  /api/history 历史事件
-//  - WS   /api/ws      实时事件推送
+//   - 静态页面 (内嵌)
+//   - POST /api/start   启动监听 (JSON body = core.Config)
+//   - POST /api/stop    停止当前监听
+//   - GET  /api/status  当前状态
+//   - GET  /api/protocols 列出监听器
+//   - GET  /api/history 历史事件
+//   - WS   /api/ws      实时事件推送
 package web
 
 import (
@@ -25,8 +25,8 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"minigreat-receiver/internal/core"
-	"minigreat-receiver/internal/registry"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/core"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/registry"
 )
 
 //go:embed static/*

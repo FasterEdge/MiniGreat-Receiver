@@ -15,13 +15,13 @@ import (
 
 	"github.com/godbus/dbus/v5"
 
-	"minigreat-receiver/internal/core"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/core"
 )
 
 const (
-	bluezName      = "org.bluez"
-	adapterIf      = "org.bluez.Adapter1"
-	deviceIf       = "org.bluez.Device1"
+	bluezName       = "org.bluez"
+	adapterIf       = "org.bluez.Adapter1"
+	deviceIf        = "org.bluez.Device1"
 	objectManagerIf = "org.freedesktop.DBus.ObjectManager"
 )
 
@@ -32,7 +32,9 @@ type BLEListener struct{}
 func (BLEListener) Name() string { return "ble" }
 
 // Description 返回描述。
-func (BLEListener) Description() string { return "BLE 扫描 (BlueZ): 发现周围蓝牙设备(地址/名称/RSSI)" }
+func (BLEListener) Description() string {
+	return "BLE 扫描 (BlueZ): 发现周围蓝牙设备(地址/名称/RSSI)"
+}
 
 // Validate 校验参数。
 func (BLEListener) Validate(cfg *core.Config) error {
@@ -102,15 +104,15 @@ func (BLEListener) Run(ctx context.Context, cfg *core.Config, sink core.Sink) er
 				}
 				seen[addr] = true
 				meta := map[string]any{
-					"address": addr,
-					"name":    name,
-					"rssi":    getI16(d, "RSSI"),
+					"address":   addr,
+					"name":      name,
+					"rssi":      getI16(d, "RSSI"),
 					"connected": getBool(d, "Connected"),
-					"path":    string(path),
+					"path":      string(path),
 				}
 				sink(core.Event{Protocol: "ble", Time: time.Now().Format("15:04:05.000"), Source: addr,
 					DataTxt: fmt.Sprintf("%s (%s) RSSI=%d", name, addr, getI16(d, "RSSI")),
-					Meta:   meta})
+					Meta:    meta})
 			}
 		}
 		time.Sleep(300 * time.Millisecond)

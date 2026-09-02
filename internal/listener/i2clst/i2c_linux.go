@@ -16,7 +16,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"minigreat-receiver/internal/core"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/core"
 )
 
 // I2CListener I2C 轮询监听器。

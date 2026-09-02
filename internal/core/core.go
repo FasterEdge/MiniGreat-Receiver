@@ -23,16 +23,16 @@ type Config struct {
 	// ---- 网络监听: tcp/udp/http/ws ----
 	ListenAddr string `json:"listenAddr,omitempty" yaml:"listenAddr"` // :9000
 	// HTTP 服务可选的响应码/响应体(回显用)
-	HTTPStatusCode int    `json:"httpStatusCode,omitempty" yaml:"httpStatusCode"`
-	HTTPBody       string `json:"httpBody,omitempty" yaml:"httpBody"`
+	HTTPStatusCode int               `json:"httpStatusCode,omitempty" yaml:"httpStatusCode"`
+	HTTPBody       string            `json:"httpBody,omitempty" yaml:"httpBody"`
 	HTTPHeaders    map[string]string `json:"httpHeaders,omitempty" yaml:"httpHeaders"`
-	Echo           bool   `json:"echo,omitempty" yaml:"echo"` // 收到数据后原样回显
+	Echo           bool              `json:"echo,omitempty" yaml:"echo"` // 收到数据后原样回显
 
 	// ---- mqtt ----
-	Broker   string `json:"broker,omitempty" yaml:"broker"`
-	ClientID string `json:"clientId,omitempty" yaml:"clientId"`
-	Username string `json:"username,omitempty" yaml:"username"`
-	Password string `json:"password,omitempty" yaml:"password"`
+	Broker   string   `json:"broker,omitempty" yaml:"broker"`
+	ClientID string   `json:"clientId,omitempty" yaml:"clientId"`
+	Username string   `json:"username,omitempty" yaml:"username"`
+	Password string   `json:"password,omitempty" yaml:"password"`
 	Topics   []string `json:"topics,omitempty" yaml:"topics"`
 
 	// ---- modbus ----
@@ -64,11 +64,11 @@ type Config struct {
 	SPIPollMS int    `json:"spiPollMs,omitempty" yaml:"spiPollMs"`
 
 	// ---- i2c ----
-	I2CBus      int    `json:"i2cBus,omitempty" yaml:"i2cBus"`
-	I2CAddr     int    `json:"i2cAddr,omitempty" yaml:"i2cAddr"`
-	I2CRegister int    `json:"i2cRegister,omitempty" yaml:"i2cRegister"`
-	I2CLen      int    `json:"i2cLen,omitempty" yaml:"i2cLen"`
-	I2CPollMS   int    `json:"i2cPollMs,omitempty" yaml:"i2cPollMs"`
+	I2CBus      int `json:"i2cBus,omitempty" yaml:"i2cBus"`
+	I2CAddr     int `json:"i2cAddr,omitempty" yaml:"i2cAddr"`
+	I2CRegister int `json:"i2cRegister,omitempty" yaml:"i2cRegister"`
+	I2CLen      int `json:"i2cLen,omitempty" yaml:"i2cLen"`
+	I2CPollMS   int `json:"i2cPollMs,omitempty" yaml:"i2cPollMs"`
 }
 
 // Event 是监听器收到的一条消息/事件。

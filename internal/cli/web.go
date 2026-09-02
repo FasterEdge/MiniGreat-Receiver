@@ -10,7 +10,7 @@ import (
 	"os/exec"
 	"runtime"
 
-	"minigreat-receiver/internal/web"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/web"
 )
 
 // cmdWeb 启动本地 Web 调试面板。

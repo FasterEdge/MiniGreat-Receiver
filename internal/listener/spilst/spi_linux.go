@@ -12,7 +12,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"minigreat-receiver/internal/core"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/core"
 )
 
 // SPIListener SPI 轮询监听器。

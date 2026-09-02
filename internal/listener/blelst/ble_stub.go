@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 
-	"minigreat-receiver/internal/core"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/core"
 )
 
 // BLEListener 非 Linux 平台占位。

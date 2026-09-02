@@ -7,15 +7,15 @@
 package registry
 
 import (
-	"minigreat-receiver/internal/core"
-	"minigreat-receiver/internal/listener/blelst"
-	"minigreat-receiver/internal/listener/canlst"
-	"minigreat-receiver/internal/listener/i2clst"
-	"minigreat-receiver/internal/listener/modbuslst"
-	"minigreat-receiver/internal/listener/mqttlst"
-	"minigreat-receiver/internal/listener/netlst"
-	"minigreat-receiver/internal/listener/serlst"
-	"minigreat-receiver/internal/listener/spilst"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/core"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/listener/blelst"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/listener/canlst"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/listener/i2clst"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/listener/modbuslst"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/listener/mqttlst"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/listener/netlst"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/listener/serlst"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/listener/spilst"
 )
 
 // New 创建并注册全部监听器。

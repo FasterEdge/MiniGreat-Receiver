@@ -13,7 +13,7 @@ import (
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 
-	"minigreat-receiver/internal/core"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/core"
 )
 
 // MQTTListener 订阅一个或多个主题并把消息转为事件。
@@ -64,8 +64,8 @@ func (MQTTListener) Run(ctx context.Context, cfg *core.Config, sink core.Sink) e
 			Protocol: "mqtt", Time: time.Now().Format("15:04:05.000"), Source: msg.Topic(),
 			Data: data, DataHex: core.FormatDataHex(data), DataTxt: core.FormatDataTxt(data),
 			Meta: map[string]any{
-				"topic":  msg.Topic(),
-				"qos":    msg.Qos(),
+				"topic":    msg.Topic(),
+				"qos":      msg.Qos(),
 				"retained": msg.Retained(),
 				"clientId": clientID,
 			},

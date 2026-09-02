@@ -12,7 +12,7 @@ import (
 	"context"
 	"fmt"
 
-	"minigreat-receiver/internal/core"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/core"
 )
 
 // CANListener 非 Linux 平台占位。

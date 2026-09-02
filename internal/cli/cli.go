@@ -23,8 +23,8 @@ import (
 	"syscall"
 	"time"
 
-	"minigreat-receiver/internal/core"
-	"minigreat-receiver/internal/registry"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/core"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/registry"
 )
 
 // Run 解析 os.Args 并执行。返回进程退出码。
@@ -91,11 +91,11 @@ func cmdList(w *os.File) int {
 }
 
 type listenFlags struct {
-	proto   string
-	listen  string
-	echo    bool
-	body    string
-	status  int
+	proto  string
+	listen string
+	echo   bool
+	body   string
+	status int
 
 	broker string
 	topics multiFlag
@@ -103,12 +103,12 @@ type listenFlags struct {
 	pass   string
 	client string
 
-	device string
-	baud   int
+	device   string
+	baud     int
 	databits int
-	parity string
+	parity   string
 	stopbits int
-	unit   int
+	unit     int
 
 	iface  string
 	filter string
@@ -119,9 +119,9 @@ type listenFlags struct {
 	speed  int64
 	poll   int
 
-	bus  int
-	addr int
-	reg  int
+	bus    int
+	addr   int
+	reg    int
 	length int
 
 	scan int
@@ -208,37 +208,37 @@ func cmdListen(args []string, stdout, stderr *os.File) int {
 
 func buildConfig(f *listenFlags) (*core.Config, error) {
 	cfg := &core.Config{
-		Protocol:     f.proto,
-		ListenAddr:   f.listen,
-		Echo:         f.echo,
-		HTTPBody:     f.body,
+		Protocol:       f.proto,
+		ListenAddr:     f.listen,
+		Echo:           f.echo,
+		HTTPBody:       f.body,
 		HTTPStatusCode: f.status,
-		Broker:       f.broker,
-		Topics:       f.topics,
-		Username:     f.user,
-		Password:     f.pass,
-		ClientID:     f.client,
-		SerialDevice: f.device,
-		SerialBaud:   f.baud,
+		Broker:         f.broker,
+		Topics:         f.topics,
+		Username:       f.user,
+		Password:       f.pass,
+		ClientID:       f.client,
+		SerialDevice:   f.device,
+		SerialBaud:     f.baud,
 		SerialDataBits: f.databits,
-		SerialParity: f.parity,
+		SerialParity:   f.parity,
 		SerialStopBits: f.stopbits,
-		ModbusUnitID: byte(f.unit),
-		ModbusBaud:   f.baud,
-		ModbusParity: f.parity,
+		ModbusUnitID:   byte(f.unit),
+		ModbusBaud:     f.baud,
+		ModbusParity:   f.parity,
 		ModbusDataBits: f.databits,
 		ModbusStopBits: f.stopbits,
-		CANInterface: f.iface,
-		SPIDevice:    f.spiDev,
-		SPIMode:      uint8(f.mode),
-		SPIBits:      uint8(f.bits),
-		SPISpeed:     f.speed,
-		SPIPollMS:    f.poll,
-		I2CBus:       f.bus,
-		I2CAddr:      f.addr,
-		I2CRegister:  f.reg,
-		I2CLen:       f.length,
-		I2CPollMS:    f.poll,
+		CANInterface:   f.iface,
+		SPIDevice:      f.spiDev,
+		SPIMode:        uint8(f.mode),
+		SPIBits:        uint8(f.bits),
+		SPISpeed:       f.speed,
+		SPIPollMS:      f.poll,
+		I2CBus:         f.bus,
+		I2CAddr:        f.addr,
+		I2CRegister:    f.reg,
+		I2CLen:         f.length,
+		I2CPollMS:      f.poll,
 		BLEScanSeconds: f.scan,
 	}
 	if f.filter != "" {

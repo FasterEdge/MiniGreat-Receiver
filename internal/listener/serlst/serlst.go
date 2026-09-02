@@ -14,7 +14,7 @@ import (
 
 	"go.bug.st/serial"
 
-	"minigreat-receiver/internal/core"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/core"
 )
 
 // SerialListener 监听串口数据。
@@ -24,7 +24,9 @@ type SerialListener struct{}
 func (SerialListener) Name() string { return "serial" }
 
 // Description 返回描述。
-func (SerialListener) Description() string { return "串口监听(UART/RS232/RS485): 实时读取串口数据" }
+func (SerialListener) Description() string {
+	return "串口监听(UART/RS232/RS485): 实时读取串口数据"
+}
 
 // Validate 校验参数。
 func (SerialListener) Validate(cfg *core.Config) error {

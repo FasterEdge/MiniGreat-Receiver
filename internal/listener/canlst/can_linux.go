@@ -18,7 +18,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
-	"minigreat-receiver/internal/core"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/core"
 )
 
 // CANListener 监听 CAN 总线报文。
@@ -28,7 +28,9 @@ type CANListener struct{}
 func (CANListener) Name() string { return "can" }
 
 // Description 返回描述。
-func (CANListener) Description() string { return "CAN 总线监听 (SocketCAN): 实时读取 can0/vcan0 报文" }
+func (CANListener) Description() string {
+	return "CAN 总线监听 (SocketCAN): 实时读取 can0/vcan0 报文"
+}
 
 // Validate 校验参数。
 func (CANListener) Validate(cfg *core.Config) error {

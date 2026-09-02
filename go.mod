@@ -1,4 +1,4 @@
-module minigreat-receiver
+module github.com/FasterEdge/MiniGreat-Receiver
 
 go 1.23
 

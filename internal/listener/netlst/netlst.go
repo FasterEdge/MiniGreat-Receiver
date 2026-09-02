@@ -20,7 +20,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"minigreat-receiver/internal/core"
+	"github.com/FasterEdge/MiniGreat-Receiver/internal/core"
 )
 
 // TCPListener 监听 TCP 端口, 接收所有连接数据。
@@ -30,7 +30,9 @@ type TCPListener struct{}
 func (TCPListener) Name() string { return "tcp" }
 
 // Description 返回描述。
-func (TCPListener) Description() string { return "TCP 服务端: 监听端口, 接收连接数据(可回显)" }
+func (TCPListener) Description() string {
+	return "TCP 服务端: 监听端口, 接收连接数据(可回显)"
+}
 
 // Validate 校验参数。
 func (TCPListener) Validate(cfg *core.Config) error {
@@ -97,7 +99,9 @@ type UDPListener struct{}
 func (UDPListener) Name() string { return "udp" }
 
 // Description 返回描述。
-func (UDPListener) Description() string { return "UDP 服务端: 监听端口, 接收数据报(可回显)" }
+func (UDPListener) Description() string {
+	return "UDP 服务端: 监听端口, 接收数据报(可回显)"
+}
 
 // Validate 校验参数。
 func (UDPListener) Validate(cfg *core.Config) error {
@@ -149,7 +153,9 @@ type HTTPListener struct{}
 func (HTTPListener) Name() string { return "http" }
 
 // Description 返回描述。
-func (HTTPListener) Description() string { return "HTTP 服务端: 记录所有请求方法与参数, 可自定义响应" }
+func (HTTPListener) Description() string {
+	return "HTTP 服务端: 记录所有请求方法与参数, 可自定义响应"
+}
 
 // Validate 校验参数。
 func (HTTPListener) Validate(cfg *core.Config) error {
