@@ -177,6 +177,12 @@ func runRTU(ctx context.Context, cfg *core.Config, unitID byte, dev *modbusDevic
 				if valid && frameLen <= len(buf) {
 					frame := buf[:frameLen]
 					buf = buf[frameLen:]
+					// 校验帧 CRC: 损坏的请求帧必须静默丢弃
+					// (detectRTUFrame 无法从请求头推断精确长度时按保守帧长截断,
+					// 这里以 CRC 为准做最终判定)。
+					if len(frame) < 4 || rtuCRC(frame[:len(frame)-2]) != uint16(frame[len(frame)-2])|uint16(frame[len(frame)-1])<<8 {
+						continue
+					}
 					resp, evt := dev.processRTU(unitID, frame)
 					if resp != nil {
 						_, _ = port.Write(resp)
@@ -357,7 +363,7 @@ func (d *modbusDevice) process(unitID, unit byte, pdu []byte, remote string) ([]
 		return resp, mkEvt(fmt.Sprintf("写单寄存器 addr=%d val=%d", addr, val), pdu[3:5],
 			map[string]any{"func": fc, "addr": addr, "val": val, "unit": unit})
 	case 0x0F:
-		if len(pdu) < 8 {
+		if len(pdu) < 6 { // fc+start2+qty2+bc1; 数据长度由 6+bc 检查兜底
 			return exceptionResp(fc, 3), nil
 		}
 		addr := binary.BigEndian.Uint16(pdu[1:3])
@@ -365,6 +371,9 @@ func (d *modbusDevice) process(unitID, unit byte, pdu []byte, remote string) ([]
 		bc := int(pdu[5])
 		if len(pdu) < 6+bc {
 			return exceptionResp(fc, 3), nil
+		}
+		if int(addr)+int(qty) > len(d.coils) {
+			return exceptionResp(fc, 2), nil
 		}
 		for i := 0; i < int(qty); i++ {
 			byteIdx := i / 8
@@ -391,6 +400,9 @@ func (d *modbusDevice) process(unitID, unit byte, pdu []byte, remote string) ([]
 		if len(pdu) < 6+bc || bc != int(qty)*2 {
 			return exceptionResp(fc, 3), nil
 		}
+		if int(addr)+int(qty) > len(d.hr) {
+			return exceptionResp(fc, 2), nil
+		}
 		for i := 0; i < int(qty); i++ {
 			d.hr[int(addr)+i] = binary.BigEndian.Uint16(pdu[6+i*2:])
 		}
@@ -403,7 +415,7 @@ func (d *modbusDevice) process(unitID, unit byte, pdu []byte, remote string) ([]
 }
 
 func readBits(region []byte, addr, qty uint16) ([]byte, error) {
-	if int(addr)+int(qty) > len(region)*8 {
+	if int(addr)+int(qty) > len(region) {
 		return nil, fmt.Errorf("out of range")
 	}
 	nbytes := (int(qty) + 7) / 8
