@@ -195,7 +195,14 @@ func (HTTPListener) Run(ctx context.Context, cfg *core.Config, sink core.Sink) e
 			_, _ = io.WriteString(w, cfg.HTTPBody)
 		}
 	})
-	srv := &http.Server{Addr: cfg.ListenAddr, Handler: handler}
+	// ReadHeaderTimeout 防慢速客户端无限占用 handler goroutine
+	// (慢连接 DoS: 连上不发完整请求头即可挂住一个 goroutine)。
+	srv := &http.Server{
+		Addr:              cfg.ListenAddr,
+		Handler:           handler,
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
 	errCh := make(chan error, 1)
 	go func() { errCh <- srv.ListenAndServe() }()
 	sink(core.Event{Protocol: "http", Time: now(), Source: cfg.ListenAddr, DataTxt: "HTTP 监听已启动: " + cfg.ListenAddr})
@@ -270,7 +277,13 @@ func (WSListener) Run(ctx context.Context, cfg *core.Config, sink core.Sink) err
 			}
 		}
 	})
-	srv := &http.Server{Addr: cfg.ListenAddr, Handler: handler}
+	// 与 HTTPListener 相同: ReadHeaderTimeout 防慢速客户端占用 goroutine
+	srv := &http.Server{
+		Addr:              cfg.ListenAddr,
+		Handler:           handler,
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
 	errCh := make(chan error, 1)
 	go func() { errCh <- srv.ListenAndServe() }()
 	sink(core.Event{Protocol: "ws", Time: now(), Source: cfg.ListenAddr, DataTxt: "WS 监听已启动: " + cfg.ListenAddr})

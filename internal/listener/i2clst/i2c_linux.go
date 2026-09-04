@@ -56,6 +56,11 @@ func (I2CListener) Run(ctx context.Context, cfg *core.Config, sink core.Sink) er
 	if readLen <= 0 {
 		readLen = 16
 	}
+	// 单次读上限: I2C 单次传输受总线限制 (~32KB), 防用户可控 I2CLen
+	// 造成每轮询周期超大一次性分配 (内存耗尽 DoS)。
+	if readLen > 4096 {
+		return fmt.Errorf("i2c: 单次读取上限 4096 字节, 当前 %d", readLen)
+	}
 	pollMS := cfg.I2CPollMS
 	if pollMS == 0 {
 		pollMS = 500
