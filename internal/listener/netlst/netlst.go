@@ -244,6 +244,10 @@ func (WSListener) Run(ctx context.Context, cfg *core.Config, sink core.Sink) err
 			return
 		}
 		defer conn.Close()
+		// 资源护栏: 单消息 1MiB 上限, 60s 读超时 — 防恶意客户端
+		// 发无限大消息耗尽内存或连上不发数据永久占用 goroutine。
+		conn.SetReadLimit(1 << 20)
+		_ = conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 		remote := r.RemoteAddr
 		sink(core.Event{Protocol: "ws", Time: now(), Source: remote, DataTxt: "WS 连接: " + remote})
 		for {
@@ -251,6 +255,7 @@ func (WSListener) Run(ctx context.Context, cfg *core.Config, sink core.Sink) err
 			if rerr != nil {
 				return
 			}
+			_ = conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 			ev := core.Event{Protocol: "ws", Time: now(), Source: remote,
 				Data: data, DataHex: core.FormatDataHex(data), DataTxt: core.FormatDataTxt(data)}
 			if mt == websocket.TextMessage {

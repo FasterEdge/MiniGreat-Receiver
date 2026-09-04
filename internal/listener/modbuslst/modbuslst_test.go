@@ -115,3 +115,38 @@ func TestDetectRTUFrame(t *testing.T) {
 		t.Fatalf("multi-write frame: n=%d ok=%v", n, ok)
 	}
 }
+
+// TestBroadcastNoResponse 回归: 广播帧 (unit=0) 必须执行写但不产生响应
+// (Modbus 规范: 广播不响应, 否则 RTU 总线上多从站同时应答会冲突)。
+func TestBroadcastNoResponse(t *testing.T) {
+	dev := newTestDevice()
+	// 广播写单寄存器 addr=10 val=0x1234: 执行写, 但 resp 必须为 nil
+	resp, evt := dev.process(1, 0, []byte{0x06, 0x00, 0x0A, 0x12, 0x34}, "test")
+	if resp != nil {
+		t.Fatalf("broadcast write must not respond, got resp %x", resp)
+	}
+	if evt == nil {
+		t.Fatal("broadcast write should still emit event")
+	}
+	if dev.hr[10] != 0x1234 {
+		t.Fatalf("broadcast write did not apply: hr[10] = %#x", dev.hr[10])
+	}
+	// 广播写多寄存器 addr=20 qty=2
+	resp, _ = dev.process(1, 0, []byte{0x10, 0x00, 0x14, 0x00, 0x02, 0x04, 0x00, 0x01, 0x00, 0x02}, "test")
+	if resp != nil {
+		t.Fatalf("broadcast multi-write must not respond, got resp %x", resp)
+	}
+	if dev.hr[20] != 0x0001 || dev.hr[21] != 0x0002 {
+		t.Fatalf("broadcast multi-write not applied: hr[20:22] = %#x", dev.hr[20:22])
+	}
+	// 广播读: 规范不允许, 静默丢弃 (不执行也不响应, 不产生事件)
+	resp, evt = dev.process(1, 0, []byte{0x03, 0x00, 0x0A, 0x00, 0x01}, "test")
+	if resp != nil || evt != nil {
+		t.Fatalf("broadcast read must be silently dropped, got resp=%x evt=%v", resp, evt)
+	}
+	// 对照: 单播写必须正常响应 (回归防误伤)
+	resp, _ = dev.process(1, 1, []byte{0x06, 0x00, 0x0A, 0xAB, 0xCD}, "test")
+	if len(resp) != 5 || resp[0] != 0x06 {
+		t.Fatalf("unicast write must respond, got %x", resp)
+	}
+}

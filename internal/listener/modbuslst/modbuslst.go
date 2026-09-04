@@ -282,6 +282,9 @@ func (d *modbusDevice) process(unitID, unit byte, pdu []byte, remote string) ([]
 		return exceptionResp(1, 1), nil
 	}
 	fc := pdu[0]
+	// 广播 (unit==0) 仅允许写功能码且从不响应 (Modbus 规范:
+	// 广播帧不产生响应, 否则同总线上多从站同时应答会冲突)。
+	broadcast := unit == 0
 	mkEvt := func(desc string, data []byte, meta map[string]any) *core.Event {
 		evt := &core.Event{Protocol: "modbus", Time: now(), Source: remote,
 			DataTxt: desc, DataHex: core.FormatDataHex(data), Data: data, Meta: meta}
@@ -289,6 +292,11 @@ func (d *modbusDevice) process(unitID, unit byte, pdu []byte, remote string) ([]
 	}
 	d.mu.Lock()
 	defer d.mu.Unlock()
+
+	// 广播读请求: 规范不允许, 静默丢弃 (不执行也不响应)。
+	if broadcast && (fc == 0x01 || fc == 0x02 || fc == 0x03 || fc == 0x04) {
+		return nil, nil
+	}
 
 	switch fc {
 	case 0x01, 0x02:
@@ -350,6 +358,10 @@ func (d *modbusDevice) process(unitID, unit byte, pdu []byte, remote string) ([]
 			return exceptionResp(fc, 3), nil
 		}
 		resp := pdu
+		if broadcast {
+			return nil, mkEvt(fmt.Sprintf("广播写单线圈 addr=%d val=%d", addr, val), []byte{byte(val)},
+				map[string]any{"func": fc, "addr": addr, "unit": unit})
+		}
 		return resp, mkEvt(fmt.Sprintf("写单线圈 addr=%d val=%d", addr, val), []byte{byte(val)},
 			map[string]any{"func": fc, "addr": addr, "unit": unit})
 	case 0x06:
@@ -360,6 +372,10 @@ func (d *modbusDevice) process(unitID, unit byte, pdu []byte, remote string) ([]
 		val := binary.BigEndian.Uint16(pdu[3:5])
 		d.hr[addr] = val
 		resp := pdu
+		if broadcast {
+			return nil, mkEvt(fmt.Sprintf("广播写单寄存器 addr=%d val=%d", addr, val), pdu[3:5],
+				map[string]any{"func": fc, "addr": addr, "val": val, "unit": unit})
+		}
 		return resp, mkEvt(fmt.Sprintf("写单寄存器 addr=%d val=%d", addr, val), pdu[3:5],
 			map[string]any{"func": fc, "addr": addr, "val": val, "unit": unit})
 	case 0x0F:
@@ -388,6 +404,10 @@ func (d *modbusDevice) process(unitID, unit byte, pdu []byte, remote string) ([]
 			}
 		}
 		resp := []byte{fc, byte(addr >> 8), byte(addr), byte(qty >> 8), byte(qty)}
+		if broadcast {
+			return nil, mkEvt(fmt.Sprintf("广播写多线圈 addr=%d qty=%d", addr, qty), pdu[6:6+bc],
+				map[string]any{"func": fc, "addr": addr, "qty": qty, "unit": unit})
+		}
 		return resp, mkEvt(fmt.Sprintf("写多线圈 addr=%d qty=%d", addr, qty), pdu[6:6+bc],
 			map[string]any{"func": fc, "addr": addr, "qty": qty, "unit": unit})
 	case 0x10:
@@ -407,6 +427,10 @@ func (d *modbusDevice) process(unitID, unit byte, pdu []byte, remote string) ([]
 			d.hr[int(addr)+i] = binary.BigEndian.Uint16(pdu[6+i*2:])
 		}
 		resp := []byte{fc, byte(addr >> 8), byte(addr), byte(qty >> 8), byte(qty)}
+		if broadcast {
+			return nil, mkEvt(fmt.Sprintf("广播写多寄存器 addr=%d qty=%d", addr, qty), pdu[6:6+bc],
+				map[string]any{"func": fc, "addr": addr, "qty": qty, "unit": unit})
+		}
 		return resp, mkEvt(fmt.Sprintf("写多寄存器 addr=%d qty=%d", addr, qty), pdu[6:6+bc],
 			map[string]any{"func": fc, "addr": addr, "qty": qty, "unit": unit})
 	default:
