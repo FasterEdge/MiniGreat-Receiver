@@ -8,6 +8,8 @@ package mqttlst
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"time"
 
@@ -39,11 +41,19 @@ func (MQTTListener) Validate(cfg *core.Config) error {
 	return nil
 }
 
+// randHex 返回 n 字节随机数的十六进制 (用于生成低碰撞概率的默认 ClientID)。
+func randHex(n int) string {
+	b := make([]byte, n)
+	_, _ = rand.Read(b)
+	return hex.EncodeToString(b)
+}
+
 // Run 订阅并阻塞转发消息。
 func (MQTTListener) Run(ctx context.Context, cfg *core.Config, sink core.Sink) error {
 	clientID := cfg.ClientID
 	if clientID == "" {
-		clientID = fmt.Sprintf("minigreat-receiver-%d", time.Now().UnixNano()%100000)
+		// 时间戳+随机数: 仅时间戳取模碰撞空间小, 多实例并发订阅会被 broker 踢旧连接
+		clientID = fmt.Sprintf("minigreat-receiver-%d-%s", time.Now().UnixNano(), randHex(4))
 	}
 	opts := mqtt.NewClientOptions().
 		AddBroker(cfg.Broker).
@@ -56,8 +66,8 @@ func (MQTTListener) Run(ctx context.Context, cfg *core.Config, sink core.Sink) e
 	}
 	client := mqtt.NewClient(opts)
 	tok := client.Connect()
-	if !tok.WaitTimeout(5*time.Second) || tok.Error() != nil {
-		return fmt.Errorf("mqtt: 连接失败: %v", tok.Error())
+	if err := waitToken(ctx, tok, 5*time.Second); err != nil {
+		return fmt.Errorf("mqtt: 连接失败: %w", err)
 	}
 	defer client.Disconnect(100)
 
@@ -76,8 +86,8 @@ func (MQTTListener) Run(ctx context.Context, cfg *core.Config, sink core.Sink) e
 	})
 	for _, t := range cfg.Topics {
 		ptok := client.Subscribe(t, cfg.QoS, handler)
-		if !ptok.WaitTimeout(5*time.Second) || ptok.Error() != nil {
-			return fmt.Errorf("mqtt: 订阅 %s 失败: %v", t, ptok.Error())
+		if err := waitToken(ctx, ptok, 5*time.Second); err != nil {
+			return fmt.Errorf("mqtt: 订阅 %s 失败: %w", t, err)
 		}
 	}
 	sink(core.Event{Protocol: "mqtt", Time: time.Now().Format("15:04:05.000"),
@@ -85,6 +95,20 @@ func (MQTTListener) Run(ctx context.Context, cfg *core.Config, sink core.Sink) e
 
 	<-ctx.Done()
 	return nil
+}
+
+// waitToken 等待 MQTT token 完成; ctx 取消/超时优先于 token, 保证调用方中止能立即返回。
+func waitToken(ctx context.Context, tok mqtt.Token, timeout time.Duration) error {
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	select {
+	case <-tok.Done():
+		return tok.Error()
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-timer.C:
+		return fmt.Errorf("timeout after %v", timeout)
+	}
 }
 
 func join(ss []string) string {
