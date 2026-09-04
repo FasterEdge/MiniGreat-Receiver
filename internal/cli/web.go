@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"time"
 
 	"github.com/FasterEdge/MiniGreat-Receiver/internal/web"
 )
@@ -42,7 +43,14 @@ func cmdWeb(args []string, stdout, stderr *os.File) int {
 	if *openBrowser {
 		openBrowserCmd(panelURL)
 	}
-	if err := http.Serve(ln, srv.Handler()); err != nil {
+	// ReadHeaderTimeout 防慢速客户端无限占用 handler goroutine
+	// (慢连接 DoS: 连上不发完整请求头即可挂住一个 goroutine)。
+	httpSrv := &http.Server{
+		Handler:           srv.Handler(),
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+	if err := httpSrv.Serve(ln); err != nil {
 		fmt.Fprintln(stderr, "Web 服务异常:", err)
 		return 1
 	}
