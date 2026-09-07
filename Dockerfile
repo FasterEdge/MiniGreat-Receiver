@@ -9,7 +9,7 @@
 # ---------- 构建阶段 ----------
 # go.mod 要求 go >= 1.25.0, 使用 1.24 会触发 GOTOOLCHAIN 隐式下载(走 go.dev),
 # 在依赖走 goproxy.cn 的受限网络环境中会构建失败; 对齐 1.25 保证构建确定性。
-FROM golang:1.25-alpine AS builder
+FROM golang:1.27-alpine AS builder
 
 ARG TARGETARCH=amd64
 ARG VERSION=1.0.20260902
