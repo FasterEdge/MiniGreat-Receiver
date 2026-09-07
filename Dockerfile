@@ -27,7 +27,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} \
     -o /out/minigreat-receiver .
 
 # ---------- 运行阶段 ----------
-FROM alpine:3.21
+FROM alpine:3.24
 
 RUN apk add --no-cache \
     bluez \
