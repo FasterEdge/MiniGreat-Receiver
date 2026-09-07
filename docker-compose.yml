@@ -14,8 +14,9 @@ services:
       args:
         TARGETARCH: ${TARGETARCH:-amd64}
     container_name: minigreat-receiver
+    # 硬件访问通过 devices 显式挂载 + host 网络(CAN SocketCAN 用默认 NET_RAW 能力) + D-Bus 只读挂载满足,
+    # 无需 privileged(会放大容器对主机的破坏面)
     network_mode: host
-    privileged: true
     devices:
       - /dev/ttyUSB0:/dev/ttyUSB0
       - /dev/spidev0.0:/dev/spidev0.0
