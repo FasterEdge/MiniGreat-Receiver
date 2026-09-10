@@ -49,6 +49,9 @@ func (TCPListener) Run(ctx context.Context, cfg *core.Config, sink core.Sink) er
 		return fmt.Errorf("tcp: 监听失败: %w", err)
 	}
 	defer ln.Close()
+	// ctx 取消时关闭监听 socket, 唤醒阻塞中的 Accept。
+	// 与连接 goroutine 的 c.Close() 配合: 两者缺一, Run 都无法优雅返回。
+	go func() { <-ctx.Done(); _ = ln.Close() }()
 	sink(core.Event{Protocol: "tcp", Time: now(), Source: cfg.ListenAddr, DataTxt: "TCP 监听已启动: " + cfg.ListenAddr})
 
 	var wg sync.WaitGroup
@@ -60,18 +63,34 @@ func (TCPListener) Run(ctx context.Context, cfg *core.Config, sink core.Sink) er
 			case <-ctx.Done():
 				return nil
 			default:
-				return fmt.Errorf("tcp: accept 失败: %w", err)
+				// Accept 瞬时错误(如 EMFILE)短暂重试, 避免热循环
+				time.Sleep(10 * time.Millisecond)
+				continue
 			}
 		}
 		wg.Add(1)
 		go func(c net.Conn) {
 			defer wg.Done()
 			defer c.Close()
+			// ctx 取消时主动关闭连接, 唤醒阻塞中的 Read。
+			// 否则空闲连接(客户端连上不发数据)会永久占住 goroutine,
+			// 且 Run 返回后的 wg.Wait() 永远等不到它退出 —— 服务无法优雅停止。
+			stop := make(chan struct{})
+			defer close(stop)
+			go func() {
+				select {
+				case <-ctx.Done():
+					_ = c.Close()
+				case <-stop:
+				}
+			}()
 			remote := c.RemoteAddr().String()
 			sink(core.Event{Protocol: "tcp", Time: now(), Source: remote, DataTxt: "新连接: " + remote})
 			r := bufio.NewReader(c)
 			buf := make([]byte, 8192)
 			for {
+				// 空闲读超时 60s, 防慢速/僵尸连接无限占用 goroutine
+				_ = c.SetReadDeadline(time.Now().Add(60 * time.Second))
 				n, rerr := r.Read(buf)
 				if n > 0 {
 					data := append([]byte(nil), buf[:n]...)
@@ -82,7 +101,7 @@ func (TCPListener) Run(ctx context.Context, cfg *core.Config, sink core.Sink) er
 					}
 				}
 				if rerr != nil {
-					if rerr != io.EOF {
+					if rerr != io.EOF && !strings.Contains(rerr.Error(), "use of closed network connection") {
 						sink(core.Event{Protocol: "tcp", Time: now(), Source: remote, DataTxt: "连接关闭: " + rerr.Error()})
 					}
 					return
@@ -122,6 +141,9 @@ func (UDPListener) Run(ctx context.Context, cfg *core.Config, sink core.Sink) er
 		return fmt.Errorf("udp: 监听失败: %w", err)
 	}
 	defer conn.Close()
+	// ctx 取消时关闭 socket, 唤醒阻塞中的 ReadFromUDP。
+	// 否则无数据包到达时 Run 永远不返回, 服务无法优雅停止。
+	go func() { <-ctx.Done(); _ = conn.Close() }()
 	sink(core.Event{Protocol: "udp", Time: now(), Source: cfg.ListenAddr, DataTxt: "UDP 监听已启动: " + cfg.ListenAddr})
 
 	buf := make([]byte, 65536)

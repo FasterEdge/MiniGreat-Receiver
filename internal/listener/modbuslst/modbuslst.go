@@ -60,6 +60,8 @@ func runTCP(ctx context.Context, cfg *core.Config, unitID byte, dev *modbusDevic
 		return fmt.Errorf("modbus(tcp): 监听失败: %w", err)
 	}
 	defer ln.Close()
+	// ctx 取消时关闭监听 socket, 唤醒阻塞中的 Accept(否则 Run 永不返回)
+	go func() { <-ctx.Done(); _ = ln.Close() }()
 	sink(core.Event{Protocol: "modbus", Time: now(), Source: cfg.ListenAddr,
 		DataTxt: fmt.Sprintf("Modbus TCP 从站已启动: %s (unit=%d)", cfg.ListenAddr, unitID)})
 	var wg sync.WaitGroup
@@ -71,7 +73,9 @@ func runTCP(ctx context.Context, cfg *core.Config, unitID byte, dev *modbusDevic
 			case <-ctx.Done():
 				return nil
 			default:
-				return fmt.Errorf("modbus(tcp): accept 失败: %w", err)
+				// Accept 瞬时错误(如 EMFILE)短暂重试, 避免热循环
+				time.Sleep(10 * time.Millisecond)
+				continue
 			}
 		}
 		wg.Add(1)
