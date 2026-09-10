@@ -35,11 +35,22 @@ func cmdWeb(args []string, stdout, stderr *os.File) int {
 
 	port := ln.Addr().(*net.TCPAddr).Port
 	host := "127.0.0.1"
-	if h, _, e := net.SplitHostPort(*addr); e == nil && h != "" && h != "0.0.0.0" && h != "::" {
-		host = h
+	exposed := false
+	if h, _, e := net.SplitHostPort(*addr); e == nil && h != "" {
+		if h == "0.0.0.0" || h == "::" {
+			exposed = true
+			host = h
+		} else {
+			host = h
+		}
 	}
 	panelURL := fmt.Sprintf("http://%s:%d", host, port)
 	fmt.Fprintf(stdout, "MiniGreat-Receiver Web 调试面板: %s\n", panelURL)
+	if exposed {
+		// 面板无鉴权: /api/events 与历史接口向所在网络所有主机推送监听事件
+		// (事件含采集数据/源地址)——显式暴露必须伴随醒目警告。
+		fmt.Fprintln(stdout, "警告: 面板监听 0.0.0.0/:: 且无鉴权——所在网络内的任何主机都可查看监听事件与历史数据, 请确认部署网络可信, 或加访问控制(防火墙/iptables)。")
+	}
 	if *openBrowser {
 		openBrowserCmd(panelURL)
 	}
