@@ -309,6 +309,11 @@ func (d *modbusDevice) process(unitID, unit byte, pdu []byte, remote string) ([]
 		}
 		addr := binary.BigEndian.Uint16(pdu[1:3])
 		qty := binary.BigEndian.Uint16(pdu[3:5])
+		// Modbus 规范: 读线圈/离散输入单次最多 2000 点 (0x7D0)。
+		// 未校验长度可让攻击者请求超大点数, 触发超额分配/异常响应。
+		if qty == 0 || qty > 2000 {
+			return exceptionResp(fc, 3), nil
+		}
 		var region []byte
 		name := "线圈"
 		if fc == 0x02 {
@@ -330,6 +335,12 @@ func (d *modbusDevice) process(unitID, unit byte, pdu []byte, remote string) ([]
 		}
 		addr := binary.BigEndian.Uint16(pdu[1:3])
 		qty := binary.BigEndian.Uint16(pdu[3:5])
+		// Modbus 规范: 读寄存器单次最多 125 个 (0x7D), 且响应字节数
+		// (qty*2) 必须能用单字节表示。旧实现用 uint16 计算 qty*2,
+		// qty>32767 时回绕为小值, 随后按 qty 写 data 越界 → 远程崩溃。
+		if qty == 0 || qty > 125 {
+			return exceptionResp(fc, 3), nil
+		}
 		var region []uint16
 		name := "保持寄存器"
 		if fc == 0x04 {
@@ -341,7 +352,7 @@ func (d *modbusDevice) process(unitID, unit byte, pdu []byte, remote string) ([]
 		if int(addr)+int(qty) > len(region) {
 			return exceptionResp(fc, 2), nil
 		}
-		data := make([]byte, qty*2)
+		data := make([]byte, int(qty)*2)
 		for i := 0; i < int(qty); i++ {
 			binary.BigEndian.PutUint16(data[i*2:], region[int(addr)+i])
 		}

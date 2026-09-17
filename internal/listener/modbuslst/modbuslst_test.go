@@ -67,6 +67,28 @@ func TestModbusWriteMultipleBoundary(t *testing.T) {
 	}
 }
 
+// TestModbusReadRegisterQtyOverflow 回归: 0x03/0x04 读寄存器 qty 超出规范上限
+// (125) 时, 旧实现用 uint16 计算 qty*2, qty>32767 回绕为小值, 随后按 qty 写
+// data 切片越界 panic → 远程崩溃。修复后必须返回异常码 3 且不 panic。
+func TestModbusReadRegisterQtyOverflow(t *testing.T) {
+	dev := newTestDevice()
+	// qty=40000 (> 125, 且 qty*2 在 uint16 下回绕), 曾触发 data 越界写入崩溃
+	resp, _ := dev.process(1, 1, []byte{0x03, 0x00, 0x00, 0x9C, 0x40}, "test")
+	if len(resp) != 2 || resp[0] != 0x83 || resp[1] != 0x03 {
+		t.Fatalf("0x03 qty overflow should return exception 3, got %x", resp)
+	}
+	// qty=125 边界内应成功, 且响应长度 2+250=252
+	resp, _ = dev.process(1, 1, []byte{0x03, 0x00, 0x00, 0x00, 0x7D}, "test")
+	if len(resp) != 2+250 || resp[0] != 0x03 {
+		t.Fatalf("0x03 qty=125 should succeed, got len=%d resp=%x", len(resp), resp)
+	}
+	// qty=0 应返回异常码 3
+	resp, _ = dev.process(1, 1, []byte{0x04, 0x00, 0x00, 0x00, 0x00}, "test")
+	if len(resp) != 2 || resp[0] != 0x84 || resp[1] != 0x03 {
+		t.Fatalf("0x04 qty=0 should return exception 3, got %x", resp)
+	}
+}
+
 // TestRTUCRCKnownVector 验证 rtuCRC 实现与标准向量一致:
 // 经典示例帧 01 03 00 00 00 0A 的 CRC16 = 0xCDC5
 // (uint16 低字节 0xC5 在线上先行, 标准帧为 ... 0A C5 CD)。
