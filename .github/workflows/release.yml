@@ -42,7 +42,7 @@ jobs:
         else
           tar czf ../minigreat-receiver-${{ matrix.target }}.tar.gz minigreat-receiver
         fi
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: 'minigreat-receiver-${{ matrix.target }}'
         path: '${{ github.workspace }}/minigreat-receiver-${{ matrix.target }}.*'
