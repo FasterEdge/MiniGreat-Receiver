@@ -1,5 +1,5 @@
 # MiniGreat-Receiver Makefile
-VERSION ?= 1.0.20261022
+VERSION ?= 1.0.20261116
 BIN     := minigreat-receiver
 LDFLAGS := -s -w -X main.version=$(VERSION)
 
